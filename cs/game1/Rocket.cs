@@ -4,17 +4,23 @@ using Raylib_cs;
 
 namespace Game1
 {
+    public delegate void RocketReachedTargetCallback();
+
     class Rocket
     {
         private int level = 1;
 
         private float LaunchCost = 0f;
-        public float FuelLevel { get; private set; } = 100f;
-        private float speed = 8f;
+
+        public float fuelLevel { get; private set; } = 12;
+        public float burnRate { get; private set; } = 0.34f; // Per m
+
+        private float currentSpeed = 0f;
+        private float acceleration = 0.25f; // The rate at which the velocity is changing
 
         private float distanceToTarget = 0f;
 
-        public String State { get; private set; } = "idle";
+        private String state = "idle";
 
         private int LaunchStart = 0;
 
@@ -22,9 +28,14 @@ namespace Game1
         private float targetY = 0f;
 
         private Vector v = new Vector(0f, 0f);
+        private Vector initialV = new Vector(0f, 0f);
 
         private float posX = 400f;
         private float posY = 540f;
+
+        private RocketReachedTargetCallback targetReachedCallback;
+
+        private int launchStartMs = 0;
 
         public void SetTarget(float x, float y)
         {
@@ -44,30 +55,67 @@ namespace Game1
             return 100f * this.level;
         }
 
-        public void Launch()
+        public void Launch(RocketReachedTargetCallback targetReachedCallback)
         {
-            Vector n = new Vector(targetX - posX, targetY - posY).Normalize();
-            v = new Vector(n.x * speed, n.y * speed);
-            Console.WriteLine("Launching rocket at {0}, {1}", v.x, v.y);
+            initialV = new Vector(targetX - posX, targetY - posY).Normalize();
+
+            this.state = "launching";
+            this.currentSpeed = 0;
+
+            this.targetReachedCallback = targetReachedCallback;
+
+            this.launchStartMs = Environment.TickCount;
         }
 
         public void Update()
         {
+            if (IsLaunching())
+            {
+                currentSpeed = acceleration * ((Environment.TickCount - launchStartMs) / 1000);
+                v = new Vector(initialV.x * currentSpeed, initialV.y * currentSpeed);
+            }
+
             posX += v.x;
             posY += v.y;
-
             this.CalculateDistanceToTarget();
+
+            if (distanceToTarget <= 8f && state.Equals("launching"))
+            {
+                v = new Vector(0f, 0f);
+                targetReachedCallback();
+
+                state = "Returning-to-base";
+            }
+        }
+
+        public void ReturnToBase()
+        {
+
+        }
+
+        public bool IsIdle()
+        {
+            return state.Equals("idle");
+        }
+
+        public bool IsLaunching()
+        {
+            return state.Equals("launching");
+        }
+
+        public bool IsReturningToBase()
+        {
+            return state.Equals("Returning-to-base");
         }
 
         public void Upgrade()
         {
             this.level += 1;
-            this.speed = (float)Math.Pow(13f, 0.4f*level);
         }
 
         public float GetSpeed()
         {
-            return speed;
+            return currentSpeed;
         }
 
         public float GetDistanceToTarget()

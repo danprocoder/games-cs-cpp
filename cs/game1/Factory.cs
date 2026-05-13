@@ -49,11 +49,6 @@ namespace Game1
             return rocket;
         }
 
-        public void LaunchRocket()
-        {
-            this.Income -= this.rocket.GetLaunchCost();
-            rocket.Launch();
-        }
 
         public void UpgradeRocket()
         {
@@ -63,7 +58,7 @@ namespace Game1
 
         public void UpdateEvent()
         {
-            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left) && rocket.IsIdle())
             {
                 this.Earn((float) ClickEarnable);
             }

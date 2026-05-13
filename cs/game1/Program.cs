@@ -36,6 +36,8 @@ namespace Game1
                     else if (this.launchState.Equals("SelectTarget"))
                     {
                         this.launchState = "Launching";
+                        Factory.GetRocket().Launch(this.onRocketReachedTarget);
+                        Factory.Income -= Factory.GetRocket().GetLaunchCost();
                     }
                 }
                 else if (launchState != null && launchState.Equals("SelectTarget"))
@@ -43,6 +45,12 @@ namespace Game1
                     Factory.GetRocket().SetTarget(x, y);
                 }
             }
+        }
+
+        public void onRocketReachedTarget()
+        {
+            Factory.Earn(1f);
+            Factory.GetRocket().ReturnToBase();
         }
 
         public void DrawTexts()
@@ -82,13 +90,23 @@ namespace Game1
                 }
                 else if (this.launchState.Equals("Launching"))
                 {
-                    Factory.GetRocket().Launch();
-                    text = "Launching...";
+                    Rocket rocket = Factory.GetRocket();
+                    if (rocket.IsLaunching())
+                    {
+                        text = "Launching...";
+                    }
+                    else if (rocket.IsReturningToBase())
+                    {
+                        text = "Returning to base...";
+                    }
                 }
             }
 
-            Raylib.DrawRectangle(670, 550, 120, 40, Color.Green);
-            Raylib.DrawText(text, 680, 560, 15, Color.Black);
+            int tw = Raylib.MeasureText(text, 15);
+            int btnWidth = tw + 20;
+            int btnX = 800 - btnWidth - 20;
+            Raylib.DrawRectangle(btnX, 550, btnWidth, 40, Color.Green);
+            Raylib.DrawText(text, btnX + 10, 560, 15, Color.Black);
         }
 
         public void Draw()
