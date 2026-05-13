@@ -1,85 +1,125 @@
-﻿using System;
-using System.Threading;
+using System;
+using Raylib_cs;
 
 namespace Game1
 {
-    class Game1
+    class Game
     {
-        private int LastTimeMs { set; get; } = 0;
-        private Factory factory;
+        protected Factory Factory;
 
-        private readonly float AutoEarnable = 0.02f;
-        private readonly float ClickEarnable = 0.35f;
+        private string? launchState { get; set; } = null;
 
-        public Game1()
+        public Game()
         {
-            this.LastTimeMs = DateTime.Now.Millisecond;
-            this.factory = new Factory();
+            Factory = new Factory();
         }
 
-        void AutoIncreaseIncome()
+        public void Update()
         {
-            int currentMs = Environment.TickCount;
-
-            if ((currentMs - this.LastTimeMs) > 1000)
-            {
-                this.factory.Earn((float) Math.Pow(this.AutoEarnable, this.factory.GetLevel()));
-                this.LastTimeMs = currentMs;
-            }
+            Factory.UpdateEvent();
+            Factory.Update();
         }
 
-        void Play()
+        public void HandleEvents()
         {
-            string userInput = "";
-            while (true)
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
-                this.AutoIncreaseIncome();
+                int x = Raylib.GetMouseX();
+                int y = Raylib.GetMouseY();
 
-                Console.Clear();
-                Console.WriteLine(
-                    "Total income: [{0}], Lvl: [{1}], Upgrade Cost: [{2}]\n",
-                    factory.Income,
-                    factory.GetLevel(),
-                    factory.GetTotalUpgradeCost()
-                );
-                Console.Write("Enter something: " + userInput);
-
-                if (Console.KeyAvailable)
+                if (x > 670 && y > 550)
                 {
-                    var key = Console.ReadKey(true);
-                    if (key.Key == ConsoleKey.Enter)
+                    if (this.launchState == null)
                     {
-                        string cmd = userInput.ToLower();
-                        userInput = "";
-                        if (cmd.Equals("exit")) break;
-                        else if (cmd.Equals("click"))
-                            this.factory.Earn(this.ClickEarnable);
-                        else if (cmd.Equals("factory -upgrade"))
-                            this.factory.Upgrade();
-                        else if (cmd.Equals("rocket -launch"))
-                            this.factory.LaunchRocket();
-                        else if (cmd.Equals("rocket -upgrade"))
-                            this.factory.UpgradeRocket();
+                        this.launchState = "SelectTarget";
                     }
-                    else if (key.Key == ConsoleKey.Backspace)
+                    else if (this.launchState.Equals("SelectTarget"))
                     {
-                        if (userInput.Length > 0)
-                            userInput = userInput[..^1];
-                    }
-                    else
-                    {
-                        userInput += key.KeyChar;
+                        this.launchState = "Launching";
                     }
                 }
-
-                Thread.Sleep(100);
+                else if (launchState != null && launchState.Equals("SelectTarget"))
+                {
+                    Factory.GetRocket().SetTarget(x, y);
+                }
             }
         }
 
-        static void Main(string[] args)
+        public void DrawTexts()
         {
-            Game1 game = new Game1();
-            game.Play();
+            // Texts at the top of the screen
+            Raylib.DrawText("Total income: $" + Math.Round(this.Factory.Income, 2), 10, 10, 20, Color.White);
+            Raylib.DrawText("Level: " + this.Factory.GetLevel(), 10, 40, 20, Color.White);
+            Raylib.DrawText("Upgrade cost: $" + Math.Round(this.Factory.GetTotalUpgradeCost(), 2), 10, 70, 20, Color.White);
+            string rocketText = "Rocket level: 0";
+            Raylib.DrawText(rocketText, 800 - Raylib.MeasureText(rocketText, 20) - 10, 10, 20, Color.White);
+
+            if (launchState != null)
+            {
+                if (launchState.Equals("SelectTarget"))
+                {
+                    int tw = Raylib.MeasureText("Click to select a target.", 20);
+                    Raylib.DrawText("Click to select a target.", 400 - (tw/2), 300, 20, Color.Green);
+                    Raylib.DrawRectangleLines(400 - (tw/2) - 10, 300 - 10, tw + 20, 40, Color.Green);
+                }
+                else if (launchState.Equals("Launching"))
+                {
+                    Rocket rocket = this.Factory.GetRocket();
+                    Raylib.DrawText("Distance to target: " + Math.Round(rocket.GetDistanceToTarget(), 2) + "m", 400, 300, 12, Color.Green);
+                    Raylib.DrawText("Speed: " + Math.Round(rocket.GetSpeed(), 2) + "m/s", 400, 340, 12, Color.Green);
+                }
+            }
+        }
+
+        public void DrawLaunchButton()
+        {
+            string text = "Launch rocket";
+            if (this.launchState != null)
+            {
+                if (this.launchState.Equals("SelectTarget"))
+                {
+                    text = "Start";
+                }
+                else if (this.launchState.Equals("Launching"))
+                {
+                    Factory.GetRocket().Launch();
+                    text = "Launching...";
+                }
+            }
+
+            Raylib.DrawRectangle(670, 550, 120, 40, Color.Green);
+            Raylib.DrawText(text, 680, 560, 15, Color.Black);
+        }
+
+        public void Draw()
+        {
+            Factory.Draw();
+
+            DrawTexts();
+
+            DrawLaunchButton();
+        }
+
+        public static void Main()
+        {
+            Raylib.InitWindow(800, 600, "Rocket Tycoon Calculator");
+            Raylib.SetTargetFPS(60);
+
+            Game game = new Game();
+
+            while (!Raylib.WindowShouldClose())
+            {
+                Raylib.BeginDrawing();
+                Raylib.ClearBackground(Color.Black);
+
+                game.HandleEvents();
+                game.Update();
+                game.Draw();
+                
+                Raylib.EndDrawing();
+            }
+
+            Raylib.CloseWindow();
         }
     }
 }

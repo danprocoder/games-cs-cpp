@@ -1,4 +1,5 @@
 using System;
+using Raylib_cs;
 
 namespace Game1
 {
@@ -8,6 +9,18 @@ namespace Game1
 
         private float UpgradeCost { set; get; } = (float)Math.Exp(1f);
         private int UpgradeLevel = 1;
+
+        private Rocket rocket;
+
+        private int LastTimeMs = Environment.TickCount;
+        
+        private readonly float AutoEarnable = 0.02f;
+        private readonly float ClickEarnable = 0.35f;
+
+        public Factory()
+        {
+            rocket = new Rocket();
+        }
 
         public void Earn(float income = 1f)
         {
@@ -31,14 +44,46 @@ namespace Game1
             this.UpgradeCost = (float)Math.Exp(this.UpgradeLevel);
         }
 
+        public Rocket GetRocket()
+        {
+            return rocket;
+        }
+
         public void LaunchRocket()
         {
-
+            this.Income -= this.rocket.GetLaunchCost();
+            rocket.Launch();
         }
 
         public void UpgradeRocket()
         {
-            
+            this.Income -= this.rocket.GetUpgradeCost();
+            rocket.Upgrade();
+        }
+
+        public void UpdateEvent()
+        {
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                this.Earn((float) ClickEarnable);
+            }
+        }
+
+        public void Update()
+        {
+            int currentMs = Environment.TickCount;
+            if (currentMs - this.LastTimeMs > 1000)
+            {
+                this.Earn((float) Math.Pow(this.AutoEarnable, this.GetLevel()));
+                this.LastTimeMs = currentMs;
+            }
+
+            rocket.Update();
+        }
+
+        public void Draw()
+        {
+            rocket.Draw();
         }
     }
 }
