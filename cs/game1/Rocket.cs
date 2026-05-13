@@ -33,7 +33,7 @@ namespace Game1
         private float posX = 400f;
         private float posY = 540f;
 
-        private RocketReachedTargetCallback targetReachedCallback;
+        private RocketReachedTargetCallback? targetReachedCallback;
 
         private int launchStartMs = 0;
 
