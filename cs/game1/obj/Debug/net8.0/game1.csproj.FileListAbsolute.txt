@@ -1,0 +1,14 @@
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/game1.GeneratedMSBuildEditorConfig.editorconfig
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/game1.AssemblyInfoInputs.cache
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/game1.AssemblyInfo.cs
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/game1.csproj.CoreCompileInputs.cache
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/bin/Debug/net8.0/game1
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/bin/Debug/net8.0/game1.deps.json
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/bin/Debug/net8.0/game1.runtimeconfig.json
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/bin/Debug/net8.0/game1.dll
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/bin/Debug/net8.0/game1.pdb
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/game1.dll
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/refint/game1.dll
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/game1.pdb
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/game1.genruntimeconfig.cache
+/Users/daniel.austin/Projects/m/learning-cpp/cs/game1/obj/Debug/net8.0/ref/game1.dll
