@@ -37,6 +37,8 @@ namespace Game1
 
         private int launchStartMs = 0;
 
+        private Random rng = new Random();
+
         public void SetTarget(float x, float y)
         {
             this.targetX = x;
@@ -147,6 +149,25 @@ namespace Game1
             Vector2 v3 = new Vector2(posX + 25, posY + 50); // Bottom-right vertex
 
             Raylib.DrawTriangle(v1, v2, v3, Color.Red);
+
+            if (IsLaunching() || IsReturningToBase())
+            {
+                DrawFlame();
+            }
+        }
+
+        private void DrawFlame()
+        {
+            // Flame flickers by randomising the tip position slightly each frame
+            float flickerX = posX + (float)(rng.NextDouble() - 0.5) * 10f;
+            float flickerY = posY + 50f + 20f + (float)(rng.NextDouble() * 15f);
+
+            Vector2 f1 = new Vector2(flickerX, flickerY);        // Tip (bottom, flickering)
+            Vector2 f2 = new Vector2(posX - 15, posY + 50f);     // Top-left (base of rocket)
+            Vector2 f3 = new Vector2(posX + 15, posY + 50f);     // Top-right (base of rocket)
+
+            Raylib.DrawTriangle(f2, f1, f3, Color.Orange);
+            Raylib.DrawTriangle(f2, new Vector2(flickerX - 5f, flickerY - 10f), f3, Color.Yellow);
         }
     }
 }
