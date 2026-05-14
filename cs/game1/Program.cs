@@ -3,6 +3,53 @@ using Raylib_cs;
 
 namespace Game1
 {
+    class TextSize
+    {
+        public int Large { get; private set; } = 1;
+        public int Normal { get; private set; } = 2;
+        public int Small { get; private set; } = 3;
+        public int XSmall { get; private set; } = 4;
+
+        private readonly float TextScale = 1.25f;
+
+        public TextSize(int baseSize)
+        {
+            Large = (int) (baseSize * TextScale);
+            Normal = baseSize;
+        }
+
+        public static TextSize GetInstance()
+        {
+            return new TextSize(13);
+        }
+    }
+
+    class PopupMsg
+    {
+        private string Msg;
+        private int CreatedAt;
+        private int Level;
+
+        public PopupMsg(string msg, int level)
+        {
+            Msg = msg;
+            CreatedAt = Environment.TickCount;
+            Level = level;
+        }
+
+        public int TimeSeconds()
+        {
+            return (Environment.TickCount - CreatedAt) / 1000;
+        }
+        
+        public void Draw()
+        {
+            int ts = TextSize.GetInstance().Normal;
+            int tw = Raylib.MeasureText(Msg, ts);
+            Raylib.DrawText(Msg, 400 - tw/2, 300, ts, Level == 0 ? Color.Red : Color.White);
+        }
+    }
+
     class Game
     {
         protected Factory Factory;
@@ -10,6 +57,8 @@ namespace Game1
         private string? launchState { get; set; } = null;
 
         private int[][] stars = new int[100][];
+
+        private PopupMsg? msg;
 
         public Game()
         {
@@ -43,9 +92,18 @@ namespace Game1
                     }
                     else if (this.launchState.Equals("SelectTarget"))
                     {
-                        this.launchState = "Launching";
-                        Factory.GetRocket().Launch(this.onRocketReachedTarget);
-                        Factory.Income -= Factory.GetRocket().GetLaunchCost();
+                        Rocket rocket = Factory.GetRocket();
+                        float launchCost = rocket.GetLaunchCost();
+                        if (launchCost > Factory.Income)
+                        {
+                            msg = new PopupMsg("Income is too large to launch", 0);
+                        }
+                        else
+                        {
+                            this.launchState = "Launching";
+                            Factory.Income -= rocket.GetLaunchCost();
+                            rocket.Launch(onRocketReachedTarget, onRocketReturnedToBase);
+                        }
                     }
                 }
                 else if (launchState != null && launchState.Equals("SelectTarget"))
@@ -60,14 +118,29 @@ namespace Game1
             Factory.Earn(1f); // TODO: Earning needs to be exponential based on rocket level.
         }
 
+        public void onRocketReturnedToBase()
+        {
+            this.launchState = null;
+        }
+
         public void DrawTexts()
         {
+            Rocket rocket = this.Factory.GetRocket();
+
+            TextSize ts = TextSize.GetInstance();
+            
             // Texts at the top of the screen
-            Raylib.DrawText("Total income: $" + Math.Round(this.Factory.Income, 2), 10, 10, 20, Color.White);
-            Raylib.DrawText("Level: " + this.Factory.GetLevel(), 10, 40, 20, Color.White);
-            Raylib.DrawText("Upgrade cost: $" + Math.Round(this.Factory.GetTotalUpgradeCost(), 2), 10, 70, 20, Color.White);
-            string rocketText = "Rocket level: 0";
-            Raylib.DrawText(rocketText, 800 - Raylib.MeasureText(rocketText, 20) - 10, 10, 20, Color.White);
+            Raylib.DrawText("Total income: $" + Math.Round(this.Factory.Income, 2), 10, 10, ts.Large, Color.White);
+            Raylib.DrawText("Level: " + this.Factory.GetLevel(), 10, 40, ts.Large, Color.White);
+            Raylib.DrawText("Upgrade cost: $" + Math.Round(this.Factory.GetTotalUpgradeCost(), 2), 10, 70, ts.Large, Color.White);
+            
+            // Top right
+            string rocketText = "Rocket level: " + rocket.GetLevel();
+            Raylib.DrawText(rocketText, 800 - Raylib.MeasureText(rocketText, ts.Large) - 10, 10, ts.Large, Color.White);
+            
+            string launchCost = "Launch cost: $" + Math.Round(rocket.GetLaunchCost(), 2);
+            Raylib.DrawText(launchCost, 800 - Raylib.MeasureText(launchCost, ts.Large), 35, ts.Large, Color.White);
+
 
             if (launchState != null)
             {
@@ -79,9 +152,8 @@ namespace Game1
                 }
                 else if (launchState.Equals("Launching"))
                 {
-                    Rocket rocket = this.Factory.GetRocket();
-                    Raylib.DrawText("Distance to target: " + Math.Round(rocket.GetDistanceToTarget(), 2) + "m", 400, 300, 12, Color.Green);
-                    Raylib.DrawText("Speed: " + Math.Round(rocket.GetSpeed(), 2) + "m/s", 400, 340, 12, Color.Green);
+                    Raylib.DrawText("Distance to target: " + Math.Round(rocket.GetDistanceToTarget(), 2) + "m", 400, 300, ts.Normal, Color.Green);
+                    Raylib.DrawText("Speed: " + Math.Round(rocket.GetSpeed(), 2) + "m/s", 400, 340, ts.Normal, Color.Green);
                 }
             }
         }
@@ -125,6 +197,16 @@ namespace Game1
             DrawTexts();
 
             DrawLaunchButton();
+
+            if (msg != null)
+            {
+                msg.Draw();
+
+                if (msg.TimeSeconds() > 3)
+                {
+                    msg = null;
+                }
+            }
         }
 
         public void DrawStars()
