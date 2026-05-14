@@ -6,6 +6,8 @@ namespace Game1
 {
     public delegate void RocketReachedTargetCallback();
 
+    public delegate void RocketReturnedToBaseCallback();
+
     class Rocket
     {
         private int level = 1;
@@ -37,6 +39,7 @@ namespace Game1
         private float initialPosY = 540f;
 
         private RocketReachedTargetCallback? targetReachedCallback;
+        private RocketReturnedToBaseCallback? returnedToBaseCallback;
 
         private int launchStartMs = 0;
         private int returnTimeStartMs = 0;
@@ -45,6 +48,16 @@ namespace Game1
         private int h = 50;
 
         private Random rng = new Random();
+
+        public Rocket()
+        {
+            LaunchCost = (float) Math.Exp(level);
+        }
+
+        public int GetLevel()
+        {
+            return level;
+        }
 
         public void SetTarget(float x, float y)
         {
@@ -64,7 +77,8 @@ namespace Game1
             return 100f * this.level;
         }
 
-        public void Launch(RocketReachedTargetCallback targetReachedCallback)
+        public void Launch(RocketReachedTargetCallback targetReachedCallback,
+                           RocketReturnedToBaseCallback returnedToBaseCallback)
         {
             initialV = new Vector(targetX - posX, targetY - posY).Normalize();
 
@@ -73,6 +87,7 @@ namespace Game1
             this.currentSpeed = 0;
 
             this.targetReachedCallback = targetReachedCallback;
+            this.returnedToBaseCallback = returnedToBaseCallback;
 
             this.launchStartMs = Environment.TickCount;
         }
@@ -111,7 +126,7 @@ namespace Game1
                 state = "idle";
                 initialV = new Vector();
                 v = new Vector();
-                targetReachedCallback();
+                returnedToBaseCallback();
             }
         }
 
