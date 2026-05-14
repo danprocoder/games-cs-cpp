@@ -9,9 +9,17 @@ namespace Game1
 
         private string? launchState { get; set; } = null;
 
+        private int[][] stars = new int[100][];
+
         public Game()
         {
             Factory = new Factory();
+
+            Random rnd = new Random();
+            for (int i = 0; i < 100; i++)
+            {
+                stars[i] = new int[] { rnd.Next(0, 800), rnd.Next(0, 600) };
+            }
         }
 
         public void Update()
@@ -110,11 +118,21 @@ namespace Game1
 
         public void Draw()
         {
+            DrawStars();
+
             Factory.Draw();
 
             DrawTexts();
 
             DrawLaunchButton();
+        }
+
+        public void DrawStars()
+        {
+            for (int i = 0; i < stars.Length; i++)
+            {
+                Raylib.DrawPixel(stars[i][0], stars[i][1], Color.White);
+            }
         }
 
         public static void Main()

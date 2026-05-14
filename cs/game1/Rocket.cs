@@ -15,6 +15,7 @@ namespace Game1
         public float fuelLevel { get; private set; } = 12;
         public float burnRate { get; private set; } = 0.34f; // Per m
 
+        private float initialSpeed = 0f;
         private float currentSpeed = 0f;
         private float acceleration = 0.25f; // The rate at which the velocity is changing
 
@@ -40,7 +41,7 @@ namespace Game1
         private int launchStartMs = 0;
         private int returnTimeStartMs = 0;
 
-        private int w = 30;
+        private int w = 50;
         private int h = 50;
 
         private Random rng = new Random();
@@ -68,6 +69,7 @@ namespace Game1
             initialV = new Vector(targetX - posX, targetY - posY).Normalize();
 
             this.state = "launching";
+            this.initialSpeed = 0;
             this.currentSpeed = 0;
 
             this.targetReachedCallback = targetReachedCallback;
@@ -86,7 +88,7 @@ namespace Game1
             else if (IsReturningToBase())
             {
                 int secsSinceReturnStart = (Environment.TickCount - returnTimeStartMs) / 1000;
-                currentSpeed = (float)Math.Max(0.25, currentSpeed - acceleration * secsSinceReturnStart);
+                currentSpeed = (float)Math.Max(0.25, initialSpeed - acceleration * secsSinceReturnStart);
 
                 v = initialV.Multiply(currentSpeed);
             }
@@ -102,6 +104,7 @@ namespace Game1
 
                 state = "Returning-to-base";
                 returnTimeStartMs = Environment.TickCount;
+                initialSpeed = currentSpeed;
             }
             else if (GetDistanceToBase() <= 8f && state.Equals("Returning-to-base"))
             {
@@ -154,6 +157,11 @@ namespace Game1
 
         public void Draw()
         {
+            if (IsLaunching() || IsReturningToBase())
+            {
+                DrawFlame();
+            }
+
             if (this.targetX != 0f && this.targetY != 0f)
             {
                 int tx = (int)this.targetX;
@@ -167,15 +175,10 @@ namespace Game1
             }
 
             Vector2 v1 = new Vector2(posX, posY); // Top vertex
-            Vector2 v2 = new Vector2(posX - 25, posY + 50); // Bottom-left vertex
-            Vector2 v3 = new Vector2(posX + 25, posY + 50); // Bottom-right vertex
+            Vector2 v2 = new Vector2(posX - w/2, posY + h); // Bottom-left vertex
+            Vector2 v3 = new Vector2(posX + w/2, posY + h); // Bottom-right vertex
 
             Raylib.DrawTriangle(v1, v2, v3, Color.Red);
-
-            if (IsLaunching() || IsReturningToBase())
-            {
-                DrawFlame();
-            }
         }
 
         private void DrawFlame()
