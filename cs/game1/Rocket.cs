@@ -32,10 +32,16 @@ namespace Game1
 
         private float posX = 400f;
         private float posY = 540f;
+        private float initialPosX = 400f;
+        private float initialPosY = 540f;
 
         private RocketReachedTargetCallback? targetReachedCallback;
 
         private int launchStartMs = 0;
+        private int returnTimeStartMs = 0;
+
+        private int w = 30;
+        private int h = 50;
 
         private Random rng = new Random();
 
@@ -73,8 +79,16 @@ namespace Game1
         {
             if (IsLaunching())
             {
-                currentSpeed = acceleration * ((Environment.TickCount - launchStartMs) / 1000);
-                v = new Vector(initialV.x * currentSpeed, initialV.y * currentSpeed);
+                int secsSinceLaunch = (Environment.TickCount - launchStartMs) / 1000;
+                currentSpeed = acceleration * secsSinceLaunch;
+                v = initialV.Multiply(currentSpeed);
+            }
+            else if (IsReturningToBase())
+            {
+                int secsSinceReturnStart = (Environment.TickCount - returnTimeStartMs) / 1000;
+                currentSpeed = (float)Math.Max(0.25, currentSpeed - acceleration * secsSinceReturnStart);
+
+                v = initialV.Multiply(currentSpeed);
             }
 
             posX += v.x;
@@ -83,16 +97,19 @@ namespace Game1
 
             if (distanceToTarget <= 8f && state.Equals("launching"))
             {
-                v = new Vector(0f, 0f);
+                initialV = new Vector(initialPosX - posX, initialPosY - posY).Normalize();
                 targetReachedCallback();
 
                 state = "Returning-to-base";
+                returnTimeStartMs = Environment.TickCount;
             }
-        }
-
-        public void ReturnToBase()
-        {
-
+            else if (GetDistanceToBase() <= 8f && state.Equals("Returning-to-base"))
+            {
+                state = "idle";
+                initialV = new Vector();
+                v = new Vector();
+                targetReachedCallback();
+            }
         }
 
         public bool IsIdle()
@@ -128,6 +145,11 @@ namespace Game1
         private void CalculateDistanceToTarget()
         {
             this.distanceToTarget = (float) Math.Sqrt(Math.Pow(this.targetY - this.posY, 2) + Math.Pow(this.targetX - this.posX, 2));
+        }
+
+        private float GetDistanceToBase()
+        {
+            return (float) Math.Sqrt(Math.Pow(this.initialPosX - this.posX, 2) + Math.Pow(this.initialPosY - this.posY, 2));
         }
 
         public void Draw()

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Raylib_cs;
 
 namespace Game1
@@ -49,8 +49,7 @@ namespace Game1
 
         public void onRocketReachedTarget()
         {
-            Factory.Earn(1f);
-            Factory.GetRocket().ReturnToBase();
+            Factory.Earn(1f); // TODO: Earning needs to be exponential based on rocket level.
         }
 
         public void DrawTexts()
