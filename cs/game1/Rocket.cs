@@ -14,8 +14,10 @@ namespace Game1
 
         private float LaunchCost = 0f;
 
-        public float fuelLevel { get; private set; } = 12;
-        public float burnRate { get; private set; } = 0.34f; // Per m
+        public readonly float fuelCapacity = 10f;
+        public float totalFuel { get; set; } = 10f;
+        public float fuelLevel { get; private set; } = 10f;
+        public float burnRate { get; private set; } = 0.34f; // Per s
 
         private float initialSpeed = 0f;
         private float currentSpeed = 0f;
@@ -94,11 +96,19 @@ namespace Game1
 
         public void Update()
         {
+            // If it runs out of fuel in the middle of a flight, it needs to crash
+            if (IsInFlight() && GetFuelPercentLeft() == 0)
+            {
+                state = "Returning-to-base";
+            }
+
+            int secsSinceLaunch = (Environment.TickCount - launchStartMs) / 1000;
             if (IsLaunching())
             {
-                int secsSinceLaunch = (Environment.TickCount - launchStartMs) / 1000;
                 currentSpeed = acceleration * secsSinceLaunch;
                 v = initialV.Multiply(currentSpeed);
+                
+                fuelLevel = totalFuel - burnRate*secsSinceLaunch;
             }
             else if (IsReturningToBase())
             {
@@ -106,6 +116,8 @@ namespace Game1
                 currentSpeed = (float)Math.Max(0.25, initialSpeed - acceleration * secsSinceReturnStart);
 
                 v = initialV.Multiply(currentSpeed);
+                
+                fuelLevel = totalFuel - burnRate*secsSinceLaunch;
             }
 
             posX += v.x;
@@ -124,9 +136,14 @@ namespace Game1
             else if (GetDistanceToBase() <= 8f && state.Equals("Returning-to-base"))
             {
                 state = "idle";
+                totalFuel = fuelLevel;
                 initialV = new Vector();
                 v = new Vector();
-                returnedToBaseCallback();
+
+                if (returnedToBaseCallback != null)
+                {
+                    returnedToBaseCallback();
+                }
             }
         }
 
@@ -145,6 +162,11 @@ namespace Game1
             return state.Equals("Returning-to-base");
         }
 
+        public bool IsInFlight()
+        {
+            return state == "launching" || state == "Returning-to-base";
+        }
+
         public void Upgrade()
         {
             this.level += 1;
@@ -160,6 +182,11 @@ namespace Game1
             return distanceToTarget;
         }
 
+        public float GetFuelPercentLeft()
+        {
+            return (float) Math.Max(0, fuelLevel / fuelCapacity * 100);
+        }
+
         private void CalculateDistanceToTarget()
         {
             this.distanceToTarget = (float) Math.Sqrt(Math.Pow(this.targetY - this.posY, 2) + Math.Pow(this.targetX - this.posX, 2));
@@ -172,7 +199,7 @@ namespace Game1
 
         public void Draw()
         {
-            if (IsLaunching() || IsReturningToBase())
+            if ((IsLaunching() || IsReturningToBase()) && GetFuelPercentLeft() > 0)
             {
                 DrawFlame();
             }
@@ -194,6 +221,27 @@ namespace Game1
             Vector2 v3 = new Vector2(posX + w/2, posY + h); // Bottom-right vertex
 
             Raylib.DrawTriangle(v1, v2, v3, Color.Red);
+
+            DrawCockpit();
+        }
+
+        private void DrawCockpit()
+        {
+            TextSize ts = TextSize.GetInstance();
+
+            if (IsLaunching()) {
+                string distanceText = "Distance to target: " + Math.Round(GetDistanceToTarget(), 2) + "m";
+                Raylib.DrawText(distanceText, 20, 500, ts.Normal, Color.Green);
+            }
+
+            if (IsLaunching() || IsReturningToBase())
+            {
+                string speedText = "Speed: " + Math.Round(GetSpeed(), 2) + "m/s";
+                Raylib.DrawText(speedText, 20, 530, ts.Normal, Color.Green);
+            }
+
+            string fuelLeftText = "Fuel left: " + Math.Round(GetFuelPercentLeft(), 2) + "%";
+            Raylib.DrawText(fuelLeftText, 20, 560, ts.Normal, Color.Green);
         }
 
         private void DrawFlame()

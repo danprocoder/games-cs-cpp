@@ -37,9 +37,9 @@ namespace Game1
             Level = level;
         }
 
-        public int TimeSeconds()
+        public bool IsExpired()
         {
-            return (Environment.TickCount - CreatedAt) / 1000;
+            return ((Environment.TickCount - CreatedAt) / 1000) > 3;
         }
         
         public void Draw()
@@ -96,7 +96,7 @@ namespace Game1
                         float launchCost = rocket.GetLaunchCost();
                         if (launchCost > Factory.Income)
                         {
-                            msg = new PopupMsg("Income is too large to launch", 0);
+                            msg = new PopupMsg("Income is not enough to launch", 0);
                         }
                         else
                         {
@@ -150,12 +150,31 @@ namespace Game1
                     Raylib.DrawText("Click to select a target.", 400 - (tw/2), 300, 20, Color.Green);
                     Raylib.DrawRectangleLines(400 - (tw/2) - 10, 300 - 10, tw + 20, 40, Color.Green);
                 }
-                else if (launchState.Equals("Launching"))
-                {
-                    Raylib.DrawText("Distance to target: " + Math.Round(rocket.GetDistanceToTarget(), 2) + "m", 400, 300, ts.Normal, Color.Green);
-                    Raylib.DrawText("Speed: " + Math.Round(rocket.GetSpeed(), 2) + "m/s", 400, 340, ts.Normal, Color.Green);
-                }
             }
+        }
+        
+        public void DrawUpgradeFactoryButton()
+        {
+            string label = "Upgrade factory";
+            int tw = Raylib.MeasureText(label, TextSize.GetInstance().Normal);
+            int btnw = tw + 20;
+            int btnx = 800 - btnw - 20;
+            int y = 450;
+
+            Raylib.DrawRectangleLines(btnx, y, btnw, 40, Color.White);
+            Raylib.DrawText(label, btnx + 10, y + 10, TextSize.GetInstance().Normal, Color.White);
+        }
+
+        public void DrawUpgradeRocketButton()
+        {
+            string label = "Upgrade rocket";
+            int tw = Raylib.MeasureText(label, TextSize.GetInstance().Normal);
+            int btnw = tw + 20;
+            int btnx = 800 - btnw - 20;
+            int y = 500;
+
+            Raylib.DrawRectangleLines(btnx, y, btnw, 40, Color.White);
+            Raylib.DrawText(label, btnx + 10, y + 10, TextSize.GetInstance().Normal, Color.White);
         }
 
         public void DrawLaunchButton()
@@ -196,13 +215,15 @@ namespace Game1
 
             DrawTexts();
 
+            DrawUpgradeFactoryButton();
+            DrawUpgradeRocketButton();
             DrawLaunchButton();
 
             if (msg != null)
             {
                 msg.Draw();
 
-                if (msg.TimeSeconds() > 3)
+                if (msg.IsExpired())
                 {
                     msg = null;
                 }
