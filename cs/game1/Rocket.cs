@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using Raylib_cs;
+using Game1.UI;
 
 namespace Game1
 {
@@ -76,7 +77,18 @@ namespace Game1
 
         public float GetUpgradeCost()
         {
-            return (float) Math.Pow(1.6, level) * 100f;
+            return (float) Math.Pow(1.6, level);
+        }
+
+        public float GetFuelCost()
+        {
+            return (float) Math.Pow(0.35, level);
+        }
+
+        public void Refuel()
+        {
+            fuelLevel = fuelCapacity;
+            totalFuel = fuelCapacity;
         }
 
         public void Launch(RocketReachedTargetCallback targetReachedCallback,
@@ -102,22 +114,22 @@ namespace Game1
                 state = "Returning-to-base";
             }
 
-            int secsSinceLaunch = (Environment.TickCount - launchStartMs) / 1000;
+            float secsSinceLaunch = (Environment.TickCount - launchStartMs) / 1000f;
             if (IsLaunching())
             {
                 currentSpeed = acceleration * secsSinceLaunch;
                 v = initialV.Multiply(currentSpeed);
                 
-                fuelLevel = totalFuel - burnRate*secsSinceLaunch;
+                fuelLevel = (float) Math.Max(0, totalFuel - burnRate * secsSinceLaunch);
             }
             else if (IsReturningToBase())
             {
-                int secsSinceReturnStart = (Environment.TickCount - returnTimeStartMs) / 1000;
+                float secsSinceReturnStart = (Environment.TickCount - returnTimeStartMs) / 1000f;
                 currentSpeed = (float)Math.Max(0.25, initialSpeed - acceleration * secsSinceReturnStart);
 
                 v = initialV.Multiply(currentSpeed);
                 
-                fuelLevel = totalFuel - burnRate*secsSinceLaunch;
+                fuelLevel = (float) Math.Max(0, totalFuel - burnRate * secsSinceReturnStart);
             }
 
             posX += v.x;
@@ -172,6 +184,7 @@ namespace Game1
             this.level += 1;
             this.LaunchCost = (float) Math.Exp(level);
             this.fuelCapacity += 5f;
+            Refuel();
         }
 
         public float GetSpeed()
@@ -187,6 +200,11 @@ namespace Game1
         public float GetFuelPercentLeft()
         {
             return (float) Math.Max(0, fuelLevel / fuelCapacity * 100);
+        }
+        
+        public bool IsFuelTankFull()
+        {
+            return fuelLevel == fuelCapacity;
         }
 
         private void CalculateDistanceToTarget()
