@@ -14,7 +14,7 @@ namespace Game1
 
         private float LaunchCost = 0f;
 
-        public readonly float fuelCapacity = 10f;
+        public float fuelCapacity = 10f;
         public float totalFuel { get; set; } = 10f;
         public float fuelLevel { get; private set; } = 10f;
         public float burnRate { get; private set; } = 0.34f; // Per s
@@ -76,7 +76,7 @@ namespace Game1
 
         public float GetUpgradeCost()
         {
-            return 100f * this.level;
+            return (float) Math.Pow(1.6, level) * 100f;
         }
 
         public void Launch(RocketReachedTargetCallback targetReachedCallback,
@@ -170,6 +170,8 @@ namespace Game1
         public void Upgrade()
         {
             this.level += 1;
+            this.LaunchCost = (float) Math.Exp(level);
+            this.fuelCapacity += 5f;
         }
 
         public float GetSpeed()
