@@ -1,93 +1,9 @@
 ﻿using System;
 using Raylib_cs;
+using Game1.UI;
 
 namespace Game1
 {
-    class TextSize
-    {
-        public int Large { get; private set; } = 1;
-        public int Normal { get; private set; } = 2;
-        public int Small { get; private set; } = 3;
-        public int XSmall { get; private set; } = 4;
-
-        private readonly float TextScale = 1.25f;
-
-        private static TextSize? Instance = null;
-
-        private TextSize(int baseSize)
-        {
-            Large = (int) (baseSize * TextScale);
-            Normal = baseSize;
-        }
-
-        public static TextSize GetInstance()
-        {
-            Instance ??= new TextSize(13);
-            return Instance;
-        }
-    }
-
-    class PopupMsg
-    {
-        private string Msg;
-        private int CreatedAt;
-        private int Level;
-
-        public PopupMsg(string msg, int level)
-        {
-            Msg = msg;
-            CreatedAt = Environment.TickCount;
-            Level = level;
-        }
-
-        public bool IsExpired()
-        {
-            return ((Environment.TickCount - CreatedAt) / 1000) > 3;
-        }
-        
-        public void Draw()
-        {
-            int ts = TextSize.GetInstance().Normal;
-            int tw = Raylib.MeasureText(Msg, ts);
-            Raylib.DrawText(Msg, 400 - tw/2, 300, ts, Level == 0 ? Color.Red : Color.White);
-        }
-    }
-
-    class Button
-    {
-        private int X;   
-        private int Y;   
-        private int W;   
-        private int H;
-        private string Label;
-
-        public Button(int x, int y, string label)
-        {
-            this.X = x;
-            this.Y = y;
-            this.Label = label;
-
-            int tw = Raylib.MeasureText(label, TextSize.GetInstance().Normal);
-            this.W = tw + 20;
-            this.H = 40;
-        }
-
-        public bool IsPressed()
-        {
-            return Raylib.IsMouseButtonPressed(MouseButton.Left) && 
-                   Raylib.GetMouseX() > this.X && 
-                   Raylib.GetMouseX() < this.X + this.W && 
-                   Raylib.GetMouseY() > this.Y && 
-                   Raylib.GetMouseY() < this.Y + this.H;
-        }
-
-        public void Draw()
-        {
-            Raylib.DrawRectangleLines(this.X, this.Y, this.W, this.H, Color.White);
-            Raylib.DrawText(this.Label, this.X + 10, this.Y + 10, TextSize.GetInstance().Normal, Color.White);
-        }
-    }
-
     class Game
     {
         protected Factory Factory;
@@ -98,6 +14,7 @@ namespace Game1
 
         private PopupMsg? msg;
 
+        private Button refuelButtonBtn = new Button(670, 400, "Refuel ($0)");
         private Button upgradeFactoryBtn = new Button(670, 450, "Upgrade factory");
         private Button upgradeRocketBtn = new Button(670, 500, "Upgrade rocket");
 
@@ -114,7 +31,8 @@ namespace Game1
 
         public void Update()
         {
-            Factory.UpdateEvent();
+            refuelButtonBtn.SetLabel("Refuel ($" + Math.Round(Factory.GetRocket().GetFuelCost(), 2) + ")");
+
             Factory.Update();
         }
 
@@ -169,10 +87,32 @@ namespace Game1
                         Factory.UpgradeRocket();
                     }
                 }
+                else if (refuelButtonBtn.IsPressed() && Factory.GetRocket().IsIdle())
+                {
+                    OnRocketRefuelClick();
+                }
                 else if (launchState != null && launchState.Equals("SelectTarget"))
                 {
                     Factory.GetRocket().SetTarget(x, y);
                 }
+                else
+                {
+                    Factory.EarnClickIncome();
+                }
+            }
+        }
+
+        public void OnRocketRefuelClick()
+        {
+            Rocket rocket = Factory.GetRocket();
+            if (rocket.IsFuelTankFull())
+            {
+                msg = new PopupMsg("Fuel tank is already full", 0);
+            }
+            else
+            {
+                Factory.Income -= rocket.GetFuelCost();
+                rocket.Refuel();
             }
         }
 
@@ -204,6 +144,8 @@ namespace Game1
             string launchCost = "Launch cost: $" + Math.Round(rocket.GetLaunchCost(), 2);
             Raylib.DrawText(launchCost, 800 - Raylib.MeasureText(launchCost, ts.Large), 35, ts.Large, Color.White);
 
+            string rocketUpgradeCost = "Upgrade cost: $" + Math.Round(rocket.GetUpgradeCost(), 2);
+            Raylib.DrawText(rocketUpgradeCost, 800 - Raylib.MeasureText(rocketUpgradeCost, ts.Large), 60, ts.Large, Color.White);
 
             if (launchState != null)
             {
@@ -254,6 +196,7 @@ namespace Game1
 
             DrawTexts();
 
+            this.refuelButtonBtn.Draw();
             this.upgradeFactoryBtn.Draw();
             this.upgradeRocketBtn.Draw();
             DrawLaunchButton();

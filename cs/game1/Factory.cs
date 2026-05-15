@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using Raylib_cs;
+using Game1.UI;
 
 namespace Game1
 {
@@ -45,7 +46,7 @@ namespace Game1
             }
             float avg = (float)totalSkillLevel / (float)numberOfEngineers;
 
-            return (float)Math.Pow(avg, 0.03) * this.GetLevel();
+            return (float) Math.Pow(0.5, avg);
         }
 
         public int GetLevel()
@@ -77,19 +78,15 @@ namespace Game1
             return rocket;
         }
 
-
         public void UpgradeRocket()
         {
             this.Income -= this.rocket.GetUpgradeCost();
             rocket.Upgrade();
         }
 
-        public void UpdateEvent()
+        public void EarnClickIncome()
         {
-            if (Raylib.IsMouseButtonPressed(MouseButton.Left) && rocket.IsIdle())
-            {
-                this.Earn((float) ClickEarnable);
-            }
+            this.Earn((float) ClickEarnable);
         }
 
         public void Update()
