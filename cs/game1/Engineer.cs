@@ -4,9 +4,10 @@ namespace Game1
     {
         public int SkillLevel { private set; get; }
 
+        private static Random random = new Random();
+
         public Engineer()
         {
-            Random random = new Random();
             this.SkillLevel = random.Next(1, 5);
         }
     }
