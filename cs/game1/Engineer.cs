@@ -2,6 +2,12 @@ namespace Game1
 {
     class Engineer
     {
-        public float SkillLevel { set; get; } = 0.3f;
+        public int SkillLevel { private set; get; }
+
+        public Engineer()
+        {
+            Random random = new Random();
+            this.SkillLevel = random.Next(1, 5);
+        }
     }
 }
